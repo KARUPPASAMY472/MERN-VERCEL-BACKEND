@@ -1,64 +1,43 @@
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 
 dotenv.config();
-
 const app = express();
+
 app.use(express.json());
+
+// ✅ Correct CORS setup (no trailing slash)
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://mern-vercel-todo-front-end-mern-thr.vercel.app/" // change after deploy
+      "https://mern-vercel-todo-front-end-mern-thr.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   })
 );
 
-// ✅ MongoDB connection
+// ✅ Optional fallback (helps with some Vercel edge cases)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://mern-vercel-todo-front-end-mern-thr.vercel.app");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
+
+// ✅ MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
 
-// ✅ Mongoose Schema
-const todoSchema = new mongoose.Schema({
-  task: String,
-  completed: { type: Boolean, default: false },
+// ✅ Routes
+app.get("/", (req, res) => res.send("Backend working!"));
+// your todo routes below...
+
+app.listen(process.env.PORT || 5000, () => {
+  console.log(`Server running on port ${process.env.PORT || 5000}`);
 });
-
-const Todo = mongoose.model("Todo", todoSchema);
-
-// ✅ CRUD Routes
-app.get("/todos", async (req, res) => {
-  const todos = await Todo.find();
-  res.json(todos);
-});
-
-app.post("/todos", async (req, res) => {
-  const newTodo = new Todo({ task: req.body.task });
-  await newTodo.save();
-  res.json(newTodo);
-});
-
-app.put("/todos/:id", async (req, res) => {
-  const updated = await Todo.findByIdAndUpdate(
-    req.params.id,
-    { completed: req.body.completed },
-    { new: true }
-  );
-  res.json(updated);
-});
-
-app.delete("/todos/:id", async (req, res) => {
-  await Todo.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
-});
-
-app.get("/", (req, res) => res.send("Todo backend is running!"));
-
-app.listen(process.env.PORT || 5000, () =>
-  console.log(`Server running on port ${process.env.PORT || 5000}`)
-);
