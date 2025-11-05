@@ -11,7 +11,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://your-frontend.vercel.app" // change after deploy
+      "https://mern-vercel-todo-front-end-mern-thr.vercel.app/" // change after deploy
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
